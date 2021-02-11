@@ -13,20 +13,16 @@ class Card(private val size: Int) {
             inner1@ while (true) {
                 term = readLn()
 
-                if (!cardStorage.containsKey(term))
-                    break@inner1
-                else
-                    println("The term \"$term\" already exists. Try again:")
+                if (!cardStorage.containsKey(term)) break@inner1
+                else println("The term \"$term\" already exists. Try again:")
             }
 
             println("The definition for card #$numCards:")
             inner2@ while (true) {
                 definition = readLn()
 
-                if (!cardStorage.containsValue(definition))
-                    break@inner2
-                else
-                    println("The definition \"$definition\" already exists. Try again:")
+                if (!cardStorage.containsValue(definition)) break@inner2
+                else println("The definition \"$definition\" already exists. Try again:")
             }
             cardStorage[term] = definition
         }
@@ -59,7 +55,7 @@ class Card(private val size: Int) {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     println("Input the number of cards:")
     Card(readInt()).createCards()
 }
