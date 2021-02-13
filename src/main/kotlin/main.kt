@@ -33,7 +33,7 @@ class FlashCard {
             }
         }
         cardStorage[term] = definition
-        println("The pair (\"%s\":\"%s\") has been added.\n".format(term, definition))
+        println("The pair (\"%s\":\"%s\") has been added.\n".log(logStorage).format(term, definition))
         return
     }
 
@@ -60,23 +60,29 @@ class FlashCard {
 
         if (file.exists()) {
             val contents = file.readLines()
+            var currTerm = ""
 
             for ((idx, line) in contents.withIndex()) {
-                if (idx % 2 == 1) {
-                    definition.add(line)
-                } else if (idx % 2 == 0) {
+                if (idx % 2 == 0) {
+                    currTerm = line
                     term.add(line)
+                } else if (idx % 2 == 1) {
+                    if (line.indexOf(":") != -1) {
+                        val hasWrong = line.split(" : ")
+                        definition.add(hasWrong[0])
+                        hardestCard[currTerm] = hasWrong[1].toInt()
+                    } else {
+                        definition.add(line)
+                    }
                 }
             }
         } else {
             println("File not found.".log(logStorage))
             return
         }
-        val cards = term.zip(definition) { a, b -> Pair(a, b) }
 
-        cards.forEach { (key, value) ->
-            cardStorage[key] = value
-        }
+        val cards = term.zip(definition) { a, b -> Pair(a, b) }
+        cards.forEach { (key, value) -> cardStorage[key] = value }
 
         println("${term.size} cards have been loaded.".log(logStorage))
     }
@@ -84,12 +90,13 @@ class FlashCard {
     fun export() {
         println("File name:".log(logStorage))
         val filename = readLn(logStorage)
-
         val exportFile = File(filename)
         var content = ""
 
         cardStorage.forEach { (key, value) ->
-            content += "$key\n$value\n"
+            content += if (hardestCard.containsKey(key))
+                "$key\n$value : ${hardestCard[key]}\n"
+            else "$key\n$value\n"
         }
         exportFile.writeText(content)
         println("${cardStorage.keys.size} cards have been saved.".log(logStorage))
@@ -103,52 +110,43 @@ class FlashCard {
             val termToAns = cardStorage.keys.random()
             val correctDefinition = cardStorage[termToAns]
 
-            var countWrong = 0
-
             println("Print the definition of \"$termToAns\":".log(logStorage))
-            val answer = readLn(logStorage)
-
-            when {
-                answer == correctDefinition -> println("Correct!".log(logStorage))
-                cardStorage.containsValue(answer) -> {
-                    println(
-                        "Wrong. The right answer is \"$correctDefinition\", " +
-                                "but your definition is correct for \"${getKey(cardStorage, answer)}\"."
-                    )
-                    countWrong++
-                    hardestCard[termToAns] = countWrong
-                }
+            when (val answer = readLn(logStorage)) {
+                correctDefinition -> println("Correct!".log(logStorage))
                 else -> {
-                    println("Wrong. The right answer is \"$correctDefinition\".".log(logStorage))
-                    countWrong++
-                    hardestCard[termToAns] = countWrong
+                    if (cardStorage.containsValue(answer)) {
+                        println(
+                            "Wrong. The right answer is \"$correctDefinition\", " +
+                                    "but your definition is correct for \"${getKey(cardStorage, answer)}\".".log(
+                                        logStorage
+                                    )
+                        )
+                    } else println("Wrong. The right answer is \"$correctDefinition\".".log(logStorage))
                 }
             }
+            if (hardestCard.containsKey(termToAns)) hardestCard[termToAns] = hardestCard.getValue(termToAns) + 1
+            else hardestCard[termToAns] = 1
         }
     }
 
     fun log() {
-        println("File name:")
+        println("File name:".log(logStorage))
         val fileName = readLn(logStorage)
 
         val file = File(fileName)
         file.writeText(logStorage.joinToString("\n"))
-        println("The log has been saved.")
+        println("The log has been saved.".log(logStorage))
     }
-
 
     fun hardest() {
         val maxValues = hardestCard.values.maxOrNull()
-        if (maxValues == null) println("There are no cards with errors.".log(logStorage))
         val maxEntries = hardestCard.filterValues { it == maxValues }
 
         val result = when {
-            maxEntries.size == 1 -> "The hardest card is \"${hardestCard.keys.first()}\". " +
-                    "You have ${hardestCard.values.first()} errors answering it"
-            maxEntries.size > 1 -> "The hardest cards are ${
-                hardestCard.keys
-                    .joinToString(separator = ", ", prefix = '"'.toString(), postfix = '"'.toString())
-            }"
+            maxEntries.size == 1 -> "The hardest card is \"${maxEntries.keys.last()}\". " +
+                    "You have ${maxEntries.values.last()} errors answering it"
+            maxEntries.size > 1 -> "The hardest cards are ${hardestCard.keys.map { "\"$it\" " }}" +
+                    ".You have ${maxEntries.values.last()} errors answering them"
             else -> "There are no cards with errors."
         }
         println(result.log(logStorage))
@@ -190,7 +188,6 @@ fun readLn(list: MutableList<String>): String {
     list.add(returnVal)
     return returnVal
 }
-
 fun String.log(list: MutableList<String>): String {
     list.add(this)
     return this
