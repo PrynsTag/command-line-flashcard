@@ -2,8 +2,8 @@ import java.io.File
 
 class FlashCard {
     private var cardStorage: MutableMap<String, String> = mutableMapOf()
-    var logStorage: MutableList<String> = mutableListOf()
     private var hardestCard: MutableMap<String, Int> = mutableMapOf()
+    var logStorage: MutableList<String> = mutableListOf()
 
     override fun toString(): String {
         return """
@@ -50,9 +50,9 @@ class FlashCard {
         }
     }
 
-    fun import() {
+    fun import(_filename: String = "") {
         println("File name:".log(logStorage))
-        val filename = readLn(logStorage)
+        val filename = if (_filename.isNotEmpty()) _filename else readLn(logStorage)
         val file = File(filename)
 
         val term: MutableList<String> = mutableListOf()
@@ -87,9 +87,9 @@ class FlashCard {
         println("${term.size} cards have been loaded.".log(logStorage))
     }
 
-    fun export() {
+    fun export(_filename: String = "") {
         println("File name:".log(logStorage))
-        val filename = readLn(logStorage)
+        val filename = if (_filename.isNotEmpty()) _filename else readLn(logStorage)
         val exportFile = File(filename)
         var content = ""
 
@@ -160,9 +160,11 @@ class FlashCard {
 
 val deck = FlashCard()
 
-fun main() {
+fun main(args: Array<String>) {
     while (true) {
         println("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):".log(deck.logStorage))
+
+        if ("-import" in args) deck.import(args[args.indexOf("-import") + 1])
 
         when (readLn(deck.logStorage)) {
             "add" -> deck.add()
@@ -171,6 +173,7 @@ fun main() {
             "export" -> deck.export()
             "ask" -> deck.ask()
             "exit" -> {
+                if ("-export" in args) deck.export(args[args.indexOf("-export") + 1])
                 println("Bye bye!".log(deck.logStorage))
                 return
             }
